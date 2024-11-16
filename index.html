@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puter.js Chatbox</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        #chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #chatbox {
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+            font-size: 16px;
+            display: inline-block;
+        }
+        .user-message {
+            background-color: #007bff;
+            color: white;
+            text-align: right;
+            border-top-right-radius: 0;
+            align-self: flex-end; /* Align user messages to the right */
+        }
+        .ai-message {
+            background-color: #e9ecef;
+            color: #555;
+            text-align: left;
+            border-top-left-radius: 0;
+            align-self: flex-start; /* Align AI messages to the left */
+        }
+        #userInput {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #response {
+            font-size: 16px;
+            margin-top: 10px;
+            text-align: center;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <h1>Puter.js Chatbox</h1>
+        <div id="chatbox"></div>
+        <input type="text" id="userInput" placeholder="Type your message and hit Enter..." />
+        <div id="response"></div>
+    </div>
+
+    <script>
+        const chatbox = document.getElementById('chatbox');
+        const userInput = document.getElementById('userInput');
+        const responseEl = document.getElementById('response');
+
+        // State to track the conversation progress
+        const state = {
+            age: null,
+            budget: null,
+            questionsAsked: 0
+        };
+
+        function addMessage(message, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
+            messageDiv.textContent = message;
+            chatbox.appendChild(messageDiv);
+            chatbox.scrollTop = chatbox.scrollHeight; // Scroll to the bottom
+        }
+
+        // Initial greeting message from AI
+        function startChat() {
+            const initialMessage = "Hi there! 😊 I'm here to help you find the perfect gift for your friend! Let's get started. Could you tell me your friend's age?";
+            addMessage(initialMessage, 'ai');
+        }
+
+        async function sendMessage() {
+            const userMessage = userInput.value.trim();
+            if (!userMessage) return;
+
+            addMessage(userMessage, 'user');
+            userInput.value = ""; // Clear the input field
+
+            try {
+                responseEl.textContent = ""; // Clear any previous error message
+                
+                // Update the state based on the user's input
+                if (!state.age) {
+                    state.age = userMessage;
+                } else if (!state.budget) {
+                    state.budget = userMessage;
+                } else {
+                    state.questionsAsked++;
+                }
+
+                // Build the dynamic instructions
+                let dynamicInstructions = "You are helping the user find the perfect gift for their friend. ";
+                if (!state.age) {
+                    dynamicInstructions += "Start by asking the user's friend's age. ";
+                } else if (!state.budget) {
+                    dynamicInstructions += "Ask for the budget. ";
+                } else if (state.questionsAsked < 10) {
+                    dynamicInstructions += `Based on the previous answers, ask a personalized question about the friend's preferences or hobbies. Make sure not to repeat questions. Use friendly tones and emojis.`;
+                } else {
+                    dynamicInstructions += `Suggest the best gift idea based on the information provided so far. If possible, include an affiliate link using Amazon's API.`;
+                }
+
+                // Interact with the AI
+                const response = await puter.ai.chat(`${dynamicInstructions} User: ${userMessage}`);
+                addMessage(response, 'ai');
+            } catch (error) {
+                console.error("Error during AI interaction:", error);
+                responseEl.textContent = "An error occurred. Please try again later.";
+            }
+        }
+
+        // Send message on Enter key press
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Start the chat with an initial message from the AI
+        startChat();
+    </script>
+</body>
+</html>
